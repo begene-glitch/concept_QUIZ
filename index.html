@@ -53,6 +53,7 @@
             border-radius: 20px;
             font-weight: bold;
             font-size: 14px;
+            transition: background-color 0.3s;
         }
 
         .stage-title {
@@ -428,7 +429,7 @@
         }
 
         .modal-title {
-            font-size: 26px;
+            font-size: 24px;
             font-weight: 800;
             color: var(--text-main);
             margin-bottom: 16px;
@@ -472,21 +473,21 @@
 
     <div class="modal-overlay" id="celebrationModal">
         <div class="celebration-modal">
-            <div class="modal-emoji">🎉</div>
-            <div class="modal-title"><span id="modalTargetName">참가자</span>님, 축하합니다!</div>
-            <div class="modal-body">
+            <div class="modal-emoji" id="modalEmoji">🎉</div>
+            <div class="modal-title" id="modalTitle"><span id="modalTargetName">참가자</span>님, 축하합니다!</div>
+            <div class="modal-body" id="modalBody">
                 당신은 지식의 층위를 꿰뚫어 보는<br><strong>최고의 교육 콘텐츠 설계자</strong>입니다.
             </div>
-            <button class="btn-modal-close" onclick="resetQuiz()">처음으로</button>
+            <button class="btn-modal-close" id="modalActionBtn" onclick="nextAction()">다음 단계로 가기</button>
         </div>
     </div>
 
     <div class="header-nav">
         <div>
-            <span class="stage-badge">STAGE 2</span>
-            <span class="stage-title">사회과 개념으로 전이하기</span>
+            <span class="stage-badge" id="stageBadge">STAGE 1</span>
+            <span class="stage-title" id="stageTitle">국어과 맥락에서 구조 익히기</span>
         </div>
-        <div class="step-info">Step 2 / 2</div>
+        <div class="step-info" id="stepInfo">Step 1 / 2</div>
     </div>
 
     <div class="title-section">
@@ -553,39 +554,71 @@
             </div>
         </div>
         <div class="button-group">
-            <button class="btn-reset" onclick="resetQuiz()">다시 하기</button>
+            <button class="btn-reset" onclick="resetCurrentStage()">다시 하기</button>
             <button class="btn-submit" onclick="checkAnswers()">정답 확인</button>
         </div>
     </div>
 
     <script>
         const playerName = "에리카"; 
-        document.getElementById('displayPlayerName').innerText = playerName;
-        document.getElementById('modalTargetName').innerText = playerName;
+        let currentStage = 1; // 1: 국어과, 2: 사회과
+        let animationFrameId = null;
 
-        // 원본 데이터 정의
-        const rawKnowledgeData = [
-            { id: "1", text: "자원의 희소성은 경제 주체의 선택의 문제를 야기한다." },
-            { id: "2", text: "희소성" },
-            { id: "3", text: "선택" },
-            { id: "4", text: "경제 활동과 가격" },
-            { id: "5", text: "인기 운동화 한정판을 사기 위해 사람들이 줄을 섰다." },
-            { id: "6", text: "어제 마트에서 배추 한 포기가 1만 원에 판매되었다." }
-        ];
-
-        const answerKey = {
-            "자원의 희소성은 경제 주체의 선택의 문제를 야기한다.": "level-3",
-            "희소성": "level-2",
-            "선택": "level-2",
-            "경제 활동과 가격": "level-1-5",
-            "인기 운동화 한정판을 사기 위해 사람들이 줄을 섰다.": "level-1",
-            "어제 마트에서 배추 한 포기가 1만 원에 판매되었다.": "level-1"
+        // 스테이지별 데이터 세트 완벽 연동
+        const stageData = {
+            1: {
+                badge: "STAGE 1",
+                title: "국어과 맥락에서 구조 익히기",
+                step: "Step 1 / 2",
+                cards: [
+                    { id: "s1_1", text: "인과응보: 착한 사람은 복을 받고 악한 사람은 벌을 받는다." },
+                    { id: "s1_2", text: "권선징악" },
+                    { id: "s1_3", text: "인과응보" },
+                    { id: "s1_4", text: "흥부전" },
+                    { id: "s1_5", text: "흥부는 부러진 제비 다리를 고쳐주고 보물 박을 얻었다." },
+                    { id: "s1_6", text: "놀부는 제비 다리를 일부러 부러뜨리고 도깨비 박을 얻었다." }
+                ],
+                answers: {
+                    "인과응보: 착한 사람은 복을 받고 악한 사람은 벌을 받는다.": "level-3",
+                    "권선징악": "level-2",
+                    "인과응보": "level-2",
+                    "흥부전": "level-1-5",
+                    "흥부는 부러진 제비 다리를 고쳐주고 보물 박을 얻었다.": "level-1",
+                    "놀부는 제비 다리를 일부러 부러뜨리고 도깨비 박을 얻었다.": "level-1"
+                },
+                hint: "- 구체적인 인물의 행동 기술은 '1단계: 사실'입니다.\n- 사상이나 핵심 주제어는 '2단계: 개념'입니다."
+            },
+            2: {
+                badge: "STAGE 2",
+                title: "사회과 개념으로 전이하기",
+                step: "Step 2 / 2",
+                cards: [
+                    { id: "s2_1", text: "자원의 희소성은 경제 주체의 선택의 문제를 야기한다." },
+                    { id: "s2_2", text: "희소성" },
+                    { id: "s2_3", text: "선택" },
+                    { id: "s2_4", text: "경제 활동과 가격" },
+                    { id: "s2_5", text: "인기 운동화 한정판을 사기 위해 사람들이 줄을 섰다." },
+                    { id: "s2_6", text: "어제 마트에서 배추 한 포기가 1만 원에 판매되었다." }
+                ],
+                answers: {
+                    "자원의 희소성은 경제 주체의 선택의 문제를 야기한다.": "level-3",
+                    "희소성": "level-2",
+                    "선택": "level-2",
+                    "경제 활동과 가격": "level-1-5",
+                    "인기 운동화 한정판을 사기 위해 사람들이 줄을 섰다.": "level-1",
+                    "어제 마트에서 배추 한 포기가 1만 원에 판매되었다.": "level-1"
+                },
+                hint: "- 구체적인 수치나 구체적인 현상 진술은 '1단계: 사실'입니다.\n- '희소성'과 '선택'은 탐구를 관통하는 추상적인 '2단계: 개념'입니다."
+            }
         };
 
         let selectedCardText = null;
         let selectedCardElement = null;
 
-        // [핵심 변경] 학습자의 교수학적 인지 촉진을 위한 피셔-예이츠 셔플 엔진
+        // 플레이어 네임 초기 세팅
+        document.getElementById('displayPlayerName').innerText = playerName;
+
+        // 피셔-예이츠 셔플 기능
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -594,20 +627,33 @@
             return array;
         }
 
-        // 셔플된 카드를 동적으로 렌더링하는 함수
-        function renderShuffledCards() {
+        // 스테이지 데이터 로드 및 렌더링
+        function initStage(stageNum) {
+            currentStage = stageNum;
+            const data = stageData[stageNum];
+
+            // 상단 인포메이션 업데이트
+            document.getElementById('stageBadge').innerText = data.badge;
+            document.getElementById('stageTitle').innerText = data.title;
+            document.getElementById('stepInfo').innerText = data.step;
+            
+            // 버킷 초기화
+            document.getElementById('bucket-level-3').innerHTML = '';
+            document.getElementById('bucket-level-2').innerHTML = '';
+            document.getElementById('bucket-level-1-5').innerHTML = '';
+            document.getElementById('bucket-level-1').innerHTML = '';
+
+            // 좌측 목록 셔플 후 카드 배치
             const container = document.getElementById('sourceCardList');
-            container.innerHTML = ''; // 초기화
+            container.innerHTML = '';
             
-            const shuffledData = shuffleArray([...rawKnowledgeData]);
-            
-            shuffledData.forEach(item => {
+            const shuffledCards = shuffleArray([...data.cards]);
+            shuffledCards.forEach(item => {
                 const cardDiv = document.createElement('div');
                 cardDiv.className = 'knowledge-card';
                 cardDiv.setAttribute('data-id', item.id);
                 cardDiv.innerText = item.text;
                 
-                // 클릭 선택 이벤트 바인딩
                 cardDiv.addEventListener('click', function() {
                     const allCards = document.querySelectorAll('.knowledge-card');
                     allCards.forEach(c => c.classList.remove('selected'));
@@ -618,11 +664,16 @@
                 
                 container.appendChild(cardDiv);
             });
+
+            // 상태 초기화
+            selectedCardText = null;
+            selectedCardElement = null;
         }
 
-        // 초기 실행 시 카드 셔플 렌더링
-        renderShuffledCards();
+        // 초기 시작 실행 (STAGE 1 로딩)
+        initStage(1);
 
+        // 버킷 배치 인터랙션
         function placeCard(targetLevelId) {
             if (!selectedCardText || !selectedCardElement) return;
             
@@ -633,7 +684,7 @@
             placedCard.setAttribute('data-text', selectedCardText);
             placedCard.setAttribute('data-placed-level', targetLevelId);
             
-            // 더블클릭 시 롤백
+            // 더블클릭 복구 기능
             placedCard.addEventListener('dblclick', function() {
                 const originText = this.getAttribute('data-text');
                 const originalCard = Array.from(document.querySelectorAll('.knowledge-card'))
@@ -653,13 +704,15 @@
             selectedCardElement = null;
         }
 
-        function resetQuiz() {
-            location.reload();
+        function resetCurrentStage() {
+            initStage(currentStage);
         }
 
+        // 정답 검증 엔진
         function checkAnswers() {
             const placedCards = document.querySelectorAll('.placed-card');
-            const totalItems = Object.keys(answerKey).length;
+            const data = stageData[currentStage];
+            const totalItems = data.cards.length;
             
             if (placedCards.length < totalItems) {
                 alert("아직 분류하지 않은 지식들이 있습니다. 모든 지식을 피라미드에 배치한 후 정답을 확인해 주세요!");
@@ -671,7 +724,7 @@
             placedCards.forEach(card => {
                 const text = card.getAttribute('data-text');
                 const placedLevel = card.getAttribute('data-placed-level');
-                const correctLevel = answerKey[text];
+                const correctLevel = data.answers[text];
 
                 if (placedLevel !== correctLevel) {
                     incorrectCount++;
@@ -687,13 +740,53 @@
 
             if (incorrectCount === 0) {
                 triggerConfetti();
-                document.getElementById('celebrationModal').classList.add('active');
+                openCelebrationModal();
             } else {
-                alert(`❌ 아쉽습니다! 위계가 올바르지 않은 지식이 ${incorrectCount}개 있습니다.\n\n💡 힌트:\n- 구체적인 수치나 구체적인 현상 진술은 '1단계: 사실'입니다.\n- '희소성'과 '선택'은 핵심 아이디어를 구성하는 추상적인 '2단계: 개념'입니다.\n\n빨갛게 표시된 카드를 더블클릭하여 되돌린 후 다시 도전해 보세요!`);
+                alert(`❌ 아쉽습니다! 위계가 올바르지 않은 지식이 ${incorrectCount}개 있습니다.\n\n💡 힌트:\n${data.hint}\n\n빨갛게 표시된 카드를 더블클릭하여 되돌린 후 다시 정돈해 보세요!`);
             }
         }
 
-        // HTML Canvas 색종이 파티클 엔진
+        // 모달 제어 및 2단계 연동
+        function openCelebrationModal() {
+            const modal = document.getElementById('celebrationModal');
+            const nameSpan = document.getElementById('modalTargetName');
+            const body = document.getElementById('modalBody');
+            const btn = document.getElementById('modalActionBtn');
+
+            nameSpan.innerText = playerName;
+
+            if (currentStage === 1) {
+                document.getElementById('modalEmoji').innerText = "👏";
+                document.getElementById('modalTitle').innerHTML = `<span>${playerName}</span>님, STAGE 1 성공!`;
+                body.innerHTML = "익숙한 국어과 지식의 구조를 완벽하게 정돈하셨습니다.<br>이제 더 고차원적인 <strong>STAGE 2(사회과 개념 전이)</strong>로 나아가 볼까요?";
+                btn.innerText = "STAGE 2 도전하기";
+            } else {
+                document.getElementById('modalEmoji').innerText = "🎉";
+                document.getElementById('modalTitle').innerHTML = `<span>${playerName}</span>님, 최종 마스터 축하합니다!`;
+                body.innerHTML = "사회과 데이터 속에서 지식의 층위를 완벽하게 꿰뚫어 보셨습니다.<br>당신은 <strong>최고의 교육 콘텐츠 설계자</strong>입니다.";
+                btn.innerText = "처음부터 다시 하기";
+            }
+
+            modal.classList.add('active');
+        }
+
+        function nextAction() {
+            // 애니메이션 캔버스 및 모달 초기화
+            document.getElementById('celebrationModal').classList.remove('active');
+            const canvas = document.getElementById('confetti-canvas');
+            canvas.style.display = 'none';
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+            if (currentStage === 1) {
+                // 2단계 사회과로 진입
+                initStage(2);
+            } else {
+                // 완전히 처음(1단계)으로 되돌리기
+                initStage(1);
+            }
+        }
+
+        // 순수 HTML Canvas 색종이 파티클 엔진
         function triggerConfetti() {
             const canvas = document.getElementById('confetti-canvas');
             const ctx = canvas.getContext('2d');
@@ -701,11 +794,6 @@
 
             let width = canvas.width = window.innerWidth;
             let height = canvas.height = window.innerHeight;
-
-            window.addEventListener('resize', () => {
-                width = canvas.width = window.innerWidth;
-                height = canvas.height = window.innerHeight;
-            });
 
             const confettiCount = 150;
             const confettiParticles = [];
@@ -743,7 +831,7 @@
                     ctx.restore();
                 });
 
-                requestAnimationFrame(updateAndRender);
+                animationFrameId = requestAnimationFrame(updateAndRender);
             }
 
             updateAndRender();
