@@ -53,7 +53,6 @@
             border-radius: 20px;
             font-weight: bold;
             font-size: 14px;
-            transition: background-color 0.3s;
         }
 
         .stage-title {
@@ -469,8 +468,10 @@
 </head>
 <body>
 
+    <!-- 색종이 전용 캔버스 -->
     <canvas id="confetti-canvas"></canvas>
 
+    <!-- 중앙 배치 축하 모달 팝업창 -->
     <div class="modal-overlay" id="celebrationModal">
         <div class="celebration-modal">
             <div class="modal-emoji" id="modalEmoji">🎉</div>
@@ -482,20 +483,24 @@
         </div>
     </div>
 
+    <!-- 헤더 상단 영역 -->
     <div class="header-nav">
         <div>
             <span class="stage-badge" id="stageBadge">STAGE 1</span>
-            <span class="stage-title" id="stageTitle">국어과 맥락에서 구조 익히기</span>
+            <span class="stage-title" id="stageTitle">친숙한 이야기로 구조 익히기</span>
         </div>
         <div class="step-info" id="stepInfo">Step 1 / 2</div>
     </div>
 
+    <!-- 대타이틀 -->
     <div class="title-section">
         <h1>지식의 구조 마스터 퀴즈</h1>
         <p><span class="user-name" id="displayPlayerName">참가자</span>님, 지식의 피라미드를 완성해 보세요!</p>
     </div>
 
+    <!-- 메인 컨테이너 -->
     <div class="main-container">
+        <!-- 좌측 영역: 분류할 지식들 -->
         <div class="knowledge-source-box">
             <div class="source-title">
                 📋 분류할 지식들
@@ -503,7 +508,9 @@
             <div class="card-list" id="sourceCardList"></div>
         </div>
 
+        <!-- 우측 영역: 4개 층 버킷 피라미드 -->
         <div class="pyramid-container">
+            <!-- 4층: 3단계 일반화 (세모 버킷) -->
             <div class="triangle-top-wrapper" onclick="placeCard('level-3')">
                 <div class="bucket-level level-3-triangle"></div>
                 <div class="triangle-content">
@@ -515,6 +522,7 @@
                 </div>
             </div>
 
+            <!-- 3층: 2단계 개념 -->
             <div class="bucket-level level-2" onclick="placeCard('level-2')">
                 <div class="bucket-info">
                     <div class="bucket-title">☗ 2단계: 개념</div>
@@ -523,6 +531,7 @@
                 <div id="bucket-level-2" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
             </div>
 
+            <!-- 2층: 1.5단계 토픽 -->
             <div class="bucket-level level-1-5" onclick="placeCard('level-1-5')">
                 <div class="bucket-info">
                     <div class="bucket-title">🏷 1.5단계: 토픽</div>
@@ -531,6 +540,7 @@
                 <div id="bucket-level-1-5" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
             </div>
 
+            <!-- 1층: 1단계 사실 -->
             <div class="bucket-level level-1" onclick="placeCard('level-1')">
                 <div class="bucket-info">
                     <div class="bucket-title">🗂 1단계: 사실</div>
@@ -541,10 +551,12 @@
         </div>
     </div>
 
+    <!-- 푸터 브랜딩 -->
     <div class="footer-brand">
         Edugraphy Lab | Concept-Based Inquiry Learning
     </div>
 
+    <!-- 하단 가이드 바 -->
     <div class="bottom-guide-bar">
         <div class="guide-text-area">
             <div class="icon-horn">📢</div>
@@ -559,34 +571,31 @@
         </div>
     </div>
 
+    <!-- 인터랙션 엔진 통합 스크립트 -->
     <script>
         const playerName = "에리카"; 
-        let currentStage = 1; // 1: 국어과, 2: 사회과
+        let currentStage = 1; 
         let animationFrameId = null;
 
-        // 스테이지별 데이터 세트 완벽 연동
+        // [완벽 복원] 에리카 선생님의 원래 기획안 텍스트 및 위계 데이터셋 구축
         const stageData = {
             1: {
                 badge: "STAGE 1",
-                title: "국어과 맥락에서 구조 익히기",
+                title: "친숙한 이야기로 구조 익히기",
                 step: "Step 1 / 2",
                 cards: [
-                    { id: "s1_1", text: "인과응보: 착한 사람은 복을 받고 악한 사람은 벌을 받는다." },
-                    { id: "s1_2", text: "권선징악" },
-                    { id: "s1_3", text: "인과응보" },
-                    { id: "s1_4", text: "흥부전" },
-                    { id: "s1_5", text: "흥부는 부러진 제비 다리를 고쳐주고 보물 박을 얻었다." },
-                    { id: "s1_6", text: "놀부는 제비 다리를 일부러 부러뜨리고 도깨비 박을 얻었다." }
+                    { id: "s1_1", text: "전래동화에서는 선이 악을 이기는 구조를 갖는다." },
+                    { id: "s1_2", text: "선(善), 악(惡), 구조" },
+                    { id: "s1_3", text: "전래동화" },
+                    { id: "s1_4", text: "흥부놀부, 콩쥐팥쥐, 장화홍련" }
                 ],
                 answers: {
-                    "인과응보: 착한 사람은 복을 받고 악한 사람은 벌을 받는다.": "level-3",
-                    "권선징악": "level-2",
-                    "인과응보": "level-2",
-                    "흥부전": "level-1-5",
-                    "흥부는 부러진 제비 다리를 고쳐주고 보물 박을 얻었다.": "level-1",
-                    "놀부는 제비 다리를 일부러 부러뜨리고 도깨비 박을 얻었다.": "level-1"
+                    "전래동화에서는 선이 악을 이기는 구조를 갖는다.": "level-3",
+                    "선(善), 악(惡), 구조": "level-2",
+                    "전래동화": "level-1-5",
+                    "흥부놀부, 콩쥐팥쥐, 장화홍련": "level-1"
                 },
-                hint: "- 구체적인 인물의 행동 기술은 '1단계: 사실'입니다.\n- 사상이나 핵심 주제어는 '2단계: 개념'입니다."
+                hint: "- 개별 작품 이름들의 나열은 '1단계: 사실'입니다.\n- 핵심 탐구 기둥이 되는 명사들은 '2단계: 개념'입니다."
             },
             2: {
                 badge: "STAGE 2",
@@ -615,10 +624,9 @@
         let selectedCardText = null;
         let selectedCardElement = null;
 
-        // 플레이어 네임 초기 세팅
         document.getElementById('displayPlayerName').innerText = playerName;
 
-        // 피셔-예이츠 셔플 기능
+        // 피셔-예이츠 셔플 엔진 (생각의 시간 확보)
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -627,23 +635,20 @@
             return array;
         }
 
-        // 스테이지 데이터 로드 및 렌더링
+        // 스테이지 렌더링 시스템
         function initStage(stageNum) {
             currentStage = stageNum;
             const data = stageData[stageNum];
 
-            // 상단 인포메이션 업데이트
             document.getElementById('stageBadge').innerText = data.badge;
             document.getElementById('stageTitle').innerText = data.title;
             document.getElementById('stepInfo').innerText = data.step;
             
-            // 버킷 초기화
             document.getElementById('bucket-level-3').innerHTML = '';
             document.getElementById('bucket-level-2').innerHTML = '';
             document.getElementById('bucket-level-1-5').innerHTML = '';
             document.getElementById('bucket-level-1').innerHTML = '';
 
-            // 좌측 목록 셔플 후 카드 배치
             const container = document.getElementById('sourceCardList');
             container.innerHTML = '';
             
@@ -665,15 +670,13 @@
                 container.appendChild(cardDiv);
             });
 
-            // 상태 초기화
             selectedCardText = null;
             selectedCardElement = null;
         }
 
-        // 초기 시작 실행 (STAGE 1 로딩)
+        // 초기 구동
         initStage(1);
 
-        // 버킷 배치 인터랙션
         function placeCard(targetLevelId) {
             if (!selectedCardText || !selectedCardElement) return;
             
@@ -684,7 +687,6 @@
             placedCard.setAttribute('data-text', selectedCardText);
             placedCard.setAttribute('data-placed-level', targetLevelId);
             
-            // 더블클릭 복구 기능
             placedCard.addEventListener('dblclick', function() {
                 const originText = this.getAttribute('data-text');
                 const originalCard = Array.from(document.querySelectorAll('.knowledge-card'))
@@ -708,7 +710,6 @@
             initStage(currentStage);
         }
 
-        // 정답 검증 엔진
         function checkAnswers() {
             const placedCards = document.querySelectorAll('.placed-card');
             const data = stageData[currentStage];
@@ -746,7 +747,6 @@
             }
         }
 
-        // 모달 제어 및 2단계 연동
         function openCelebrationModal() {
             const modal = document.getElementById('celebrationModal');
             const nameSpan = document.getElementById('modalTargetName');
@@ -758,35 +758,31 @@
             if (currentStage === 1) {
                 document.getElementById('modalEmoji').innerText = "👏";
                 document.getElementById('modalTitle').innerHTML = `<span>${playerName}</span>님, STAGE 1 성공!`;
-                body.innerHTML = "익숙한 국어과 지식의 구조를 완벽하게 정돈하셨습니다.<br>이제 더 고차원적인 <strong>STAGE 2(사회과 개념 전이)</strong>로 나아가 볼까요?";
-                btn.innerText = "STAGE 2 도전하기";
+                body.innerHTML = "친숙한 전래동화 이야기 속 지식의 구조를 완벽하게 파악하셨습니다.<br>이제 실제 <strong>STAGE 2(사회과 데이터 영역)</strong>에 도전해볼까요?";
+                btn.innerText = "STAGE 2 시작하기";
             } else {
                 document.getElementById('modalEmoji').innerText = "🎉";
-                document.getElementById('modalTitle').innerHTML = `<span>${playerName}</span>님, 최종 마스터 축하합니다!`;
-                body.innerHTML = "사회과 데이터 속에서 지식의 층위를 완벽하게 꿰뚫어 보셨습니다.<br>당신은 <strong>최고의 교육 콘텐츠 설계자</strong>입니다.";
-                btn.innerText = "처음부터 다시 하기";
+                document.getElementById('modalTitle').innerHTML = `<span>${playerName}</span>님, 축하합니다!`;
+                body.innerHTML = "당신은 지식의 층위를 꿰뚫어 보는<br><strong>최고의 교육 콘텐츠 설계자</strong>입니다.";
+                btn.innerText = "처음으로";
             }
 
             modal.classList.add('active');
         }
 
         function nextAction() {
-            // 애니메이션 캔버스 및 모달 초기화
             document.getElementById('celebrationModal').classList.remove('active');
             const canvas = document.getElementById('confetti-canvas');
             canvas.style.display = 'none';
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
             if (currentStage === 1) {
-                // 2단계 사회과로 진입
                 initStage(2);
             } else {
-                // 완전히 처음(1단계)으로 되돌리기
                 initStage(1);
             }
         }
 
-        // 순수 HTML Canvas 색종이 파티클 엔진
         function triggerConfetti() {
             const canvas = document.getElementById('confetti-canvas');
             const ctx = canvas.getContext('2d');
