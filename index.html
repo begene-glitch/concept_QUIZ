@@ -1,281 +1,502 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[Edugraphy Lab] 지식의 구조 단계별 퀴즈</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; color: #1e293b; transition: background-color 0.5s ease; overflow-x: hidden; }
-        
-        .draggable-item { cursor: pointer; transition: all 0.2s; user-select: none; }
-        .draggable-item:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .draggable-item.selected { outline: 3px solid #0d9488; outline-offset: 2px; transform: scale(1.03); background-color: #f0fdfa; }
-        
-        .bucket { transition: all 0.3s; min-height: 120px; border-width: 2px; }
-        .bucket:hover { border-color: #0d9488; background-color: #f0fdfa; }
-        
-        .fade-in { animation: fadeIn 0.6s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* [REWARD ANIMATION] */
-        .falling-element {
-            position: fixed;
-            top: -100px;
-            pointer-events: none;
-            z-index: 9999; /* 모든 모달과 UI 위에 보이도록 설정 */
-            animation: fall linear forwards;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>지식의 구조 마스터 퀴즈</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        @keyframes fall {
-            to { transform: translateY(120vh) rotate(720deg); }
-        }
+    :root {
+      --color-bg: #ffffff;
+      --color-bg-secondary: #f8fafc;
+      --color-text-primary: #1e293b;
+      --color-text-secondary: #64748b;
+      --color-text-tertiary: #94a3b8;
+      --color-border: rgba(0,0,0,0.12);
+      --color-border-secondary: rgba(0,0,0,0.18);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
 
-        .star { color: #facc15; font-size: 28px; text-shadow: 0 0 15px rgba(250, 204, 21, 0.9); }
-        .food { font-size: 40px; }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-bg: #1e1e2e;
+        --color-bg-secondary: #27273a;
+        --color-text-primary: #e2e8f0;
+        --color-text-secondary: #94a3b8;
+        --color-text-tertiary: #64748b;
+        --color-border: rgba(255,255,255,0.1);
+        --color-border-secondary: rgba(255,255,255,0.15);
+      }
+    }
 
-        #final-modal { background: linear-gradient(135deg, #0f2942 0%, #1e4b7a 100%); }
-    </style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--color-bg-secondary);
+      color: var(--color-text-primary);
+      min-height: 100vh;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    .container { max-width: 520px; margin: 0 auto; }
+
+    /* Stage bar */
+    .stage-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .stage-pill { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; }
+    .stage-pill.s1 { background: #E1F5EE; color: #0F6E56; }
+    .stage-pill.s2 { background: #EEEDFE; color: #534AB7; }
+    .step-label { font-size: 12px; color: var(--color-text-tertiary); }
+
+    .progress-track { width: 100%; height: 3px; background: var(--color-border); border-radius: 2px; margin-bottom: 1.25rem; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease, background 0.4s ease; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 1rem; }
+    .header h1 { font-size: 18px; font-weight: 700; color: var(--color-text-primary); }
+    .header p { font-size: 13px; color: var(--color-text-secondary); margin-top: 4px; }
+
+    /* Pyramid hint */
+    .pyramid-hint {
+      background: var(--color-bg);
+      border: 0.5px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pyramid-hint span { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+
+    /* Instruction chip */
+    .instruction-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--color-bg);
+      border: 0.5px solid var(--color-border);
+      border-radius: 999px;
+      font-size: 11px;
+      color: var(--color-text-secondary);
+      padding: 4px 10px;
+      margin-bottom: 8px;
+    }
+
+    /* Source list */
+    .source-label { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .source-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1rem; }
+
+    .item-chip {
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 400;
+      padding: 9px 13px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--color-border-secondary);
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      transition: background 0.12s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .item-chip:hover { background: var(--color-bg-secondary); transform: translateY(-1px); }
+    .item-chip.sel-s1 { border-color: #1D9E75; background: #E1F5EE; color: #0F6E56; }
+    .item-chip.sel-s2 { border-color: #7F77DD; background: #EEEDFE; color: #3C3489; }
+    .item-chip.correct { border-color: #639922; background: #EAF3DE; color: #27500A; }
+    .item-chip.wrong   { border-color: #A32D2D; background: #FCEBEB; color: #791F1F; }
+
+    .item-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-border-secondary); flex-shrink: 0; transition: background 0.15s; }
+    .sel-s1 .item-dot { background: #1D9E75; }
+    .sel-s2 .item-dot { background: #7F77DD; }
+
+    /* Buckets grid */
+    .buckets-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+    .bucket {
+      border-radius: var(--radius-lg);
+      border: 1.5px dashed var(--color-border-secondary);
+      background: var(--color-bg-secondary);
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+    }
+    .bucket.hover-s1:hover { border-color: #1D9E75; background: #E1F5EE; }
+    .bucket.hover-s2:hover { border-color: #7F77DD; background: #EEEDFE; }
+
+    .bucket-header { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+    .bucket-tier { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; flex-shrink: 0; }
+    .bucket-name { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); }
+    .bucket-items { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .bucket-items .item-chip { font-size: 12px; padding: 6px 10px; }
+    .bucket-empty { font-size: 11px; color: var(--color-text-tertiary); padding: 4px 0; }
+
+    .t1 .bucket-tier { background: #E6F1FB; color: #185FA5; }
+    .t2 .bucket-tier { background: #EEEDFE; color: #3C3489; }
+    .t3 .bucket-tier { background: #E1F5EE; color: #0F6E56; }
+    .t4 .bucket-tier { background: #FAEEDA; color: #633806; }
+
+    /* Feedback bar */
+    .feedback-bar {
+      background: var(--color-bg);
+      border: 0.5px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+    .feedback-msg { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    .feedback-icon {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--color-bg-secondary);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 16px;
+    }
+    .feedback-text { font-size: 12px; color: var(--color-text-secondary); line-height: 1.4; }
+    .feedback-text strong { color: var(--color-text-primary); display: block; font-size: 13px; }
+
+    .btn-row { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-sm {
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 7px 12px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--color-border-secondary);
+      background: var(--color-bg);
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.12s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-sm:hover { background: var(--color-bg-secondary); color: var(--color-text-primary); }
+    .btn-sm.p-s1 { background: #1D9E75; border-color: #1D9E75; color: #fff; }
+    .btn-sm.p-s1:hover { background: #0F6E56; }
+    .btn-sm.p-s2 { background: #534AB7; border-color: #534AB7; color: #fff; }
+    .btn-sm.p-s2:hover { background: #3C3489; }
+    .btn-sm:active { transform: scale(0.97); }
+
+    /* Status label */
+    .all-placed { font-size: 12px; color: #3B6D11; display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+
+    /* Modals */
+    .modal-overlay {
+      position: relative;
+      min-height: 280px;
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .modal-overlay.compliment { background: rgba(15,66,41,0.65); }
+    .modal-overlay.final      { background: rgba(15,41,66,0.75); }
+
+    .modal-card {
+      background: var(--color-bg);
+      border-radius: var(--radius-lg);
+      border: 0.5px solid var(--color-border);
+      padding: 1.5rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 300px;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+    .modal-icon { font-size: 40px; line-height: 1; }
+    .modal-card h2 { font-size: 17px; font-weight: 700; color: var(--color-text-primary); }
+    .modal-card p { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
+    .modal-card p strong { color: var(--color-text-primary); }
+    .final-note {
+      background: var(--color-bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      font-style: italic;
+      line-height: 1.5;
+    }
+
+    /* Burst */
+    .burst-el { position: absolute; animation: burstFall linear forwards; font-size: 22px; pointer-events: none; }
+    @keyframes burstFall {
+      0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(290px) rotate(540deg); opacity: 0; }
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      font-size: 10px;
+      color: var(--color-text-tertiary);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-top: 2rem;
+    }
+  </style>
 </head>
-<body class="p-4 md:p-8">
+<body>
+  <div class="container">
+    <div id="root"></div>
+    <footer>Edugraphy Lab · Concept-Based Inquiry Learning</footer>
+  </div>
 
-<!-- Name Entry Overlay -->
-<div id="name-overlay" class="fixed inset-0 bg-[#0f2942] z-[200] flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-2xl fade-in">
-        <div class="text-5xl">👋</div>
-        <h2 class="text-2xl font-black text-slate-900">반갑습니다!</h2>
-        <p class="text-slate-500 text-sm">에듀그라피 랩 퀴즈를 시작하기 전,<br>당신의 이름을 알려주세요.</p>
-        <input type="text" id="user-name-input" placeholder="이름을 입력하세요" class="w-full px-4 py-4 bg-slate-100 rounded-2xl border-none focus:ring-2 focus:ring-teal-600 outline-none text-center font-bold text-lg">
-        <button onclick="saveNameAndStart()" class="w-full py-4 bg-teal-600 text-white font-bold rounded-2xl shadow-xl hover:bg-teal-700 transition active:scale-95">시작하기</button>
-    </div>
-</div>
+  <script>
+    const STAGE_DATA = {
+      1: [
+        { id:'s1a', text:'전래동화에서는 선이 악을 이기는 구조를 갖는다.', type:'gen' },
+        { id:'s1b', text:'흥부놀부, 콩쥐팥쥐, 장화홍련', type:'fact' },
+        { id:'s1c', text:'선(善), 악(惡), 구조', type:'concept' },
+        { id:'s1d', text:'전래동화', type:'topic' }
+      ],
+      2: [
+        { id:'s2a', text:'자원의 희소성은 경제 주체의 선택 문제를 야기한다.', type:'gen' },
+        { id:'s2b', text:'어제 마트에서 배추 한 포기가 1만 원에 판매되었다.', type:'fact' },
+        { id:'s2c', text:'인기 운동화 한정판을 사기 위해 사람들이 줄을 섰다.', type:'fact' },
+        { id:'s2d', text:'희소성', type:'concept' },
+        { id:'s2e', text:'선택', type:'concept' },
+        { id:'s2f', text:'경제 활동과 가격', type:'topic' }
+      ]
+    };
 
-<div id="quiz-main-ui" class="max-w-5xl mx-auto space-y-6 opacity-0 transition-opacity duration-500">
-    <!-- Progress Indicator -->
-    <div class="flex items-center justify-between px-2 mb-2">
-        <div class="flex items-center gap-3">
-            <span id="stage-badge" class="px-3 py-1 bg-navy text-white text-xs font-bold rounded-full" style="background-color: #0f2942;">STAGE 1</span>
-            <h2 id="stage-title" class="text-sm font-bold text-slate-600">친숙한 이야기로 구조 익히기</h2>
-        </div>
-        <div class="text-xs font-medium text-slate-400">Step <span id="current-step-num">1</span> / 2</div>
-    </div>
-    <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-        <div id="progress-bar" class="bg-teal-600 h-full transition-all duration-700" style="width: 50%;"></div>
-    </div>
-
-    <!-- Header -->
-    <header class="text-center py-4">
-        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">지식의 구조 마스터 퀴즈</h1>
-        <p class="text-slate-500 mt-1"><span id="display-name" class="text-teal-600 font-bold"></span>님, 지식의 피라미드를 완성해 보세요!</p>
-    </header>
-
-    <!-- Quiz Wrapper -->
-    <div id="quiz-wrapper" class="grid lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-1 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-            <h2 class="text-lg font-bold text-slate-800 mb-4 pb-2 border-b flex items-center gap-2">
-                <span>&#128203;</span> 분류할 지식들
-            </h2>
-            <div id="source-list" class="space-y-3 min-h-[300px]"></div>
-        </div>
-
-        <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bucket bg-white p-5 rounded-3xl border-dashed border-slate-200 flex flex-col" onclick="moveToBucket('gen')">
-                <h3 class="text-sm font-bold text-teal-800 mb-3">3단계: 일반화 (Generalization)</h3>
-                <div id="bucket-gen" class="flex-1 space-y-2"></div>
-            </div>
-            <div class="bucket bg-white p-5 rounded-3xl border-dashed border-slate-200 flex flex-col" onclick="moveToBucket('concept')">
-                <h3 class="text-sm font-bold text-teal-800 mb-3">2단계: 개념 (Concepts)</h3>
-                <div id="bucket-concept" class="flex-1 space-y-2"></div>
-            </div>
-            <div class="bucket bg-white p-5 rounded-3xl border-dashed border-slate-200 flex flex-col" onclick="moveToBucket('topic')">
-                <h3 class="text-sm font-bold text-teal-800 mb-3">1.5단계: 소재 (Topics)</h3>
-                <div id="bucket-topic" class="flex-1 space-y-2"></div>
-            </div>
-            <div class="bucket bg-white p-5 rounded-3xl border-dashed border-slate-200 flex flex-col" onclick="moveToBucket('fact')">
-                <h3 class="text-sm font-bold text-teal-800 mb-3">1단계: 사실 (Facts)</h3>
-                <div id="bucket-fact" class="flex-1 space-y-2"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Feedback Area -->
-    <div id="action-bar" class="bg-white p-6 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div id="feedback-area" class="flex items-center gap-4">
-            <div id="feedback-icon-circle" class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-xl">📢</div>
-            <div>
-                <p id="feedback-text" class="font-bold text-slate-700">지식 파편을 선택한 후 버킷을 클릭하세요.</p>
-                <p id="feedback-subtext" class="text-xs text-slate-400">학습을 시작합니다.</p>
-            </div>
-        </div>
-        <div class="flex gap-3">
-            <button onclick="resetCurrentStage()" class="px-5 py-3 text-sm font-bold text-slate-500 hover:text-slate-800 transition">다시 하기</button>
-            <button id="main-action-btn" onclick="checkAnswers()" class="px-10 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-2xl shadow-lg transition-all active:scale-95">정답 확인</button>
-        </div>
-    </div>
-
-    <!-- Stage 1 Compliment Modal -->
-    <div id="compliment-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-2xl">
-            <div class="text-6xl">👏</div>
-            <h2 class="text-2xl font-black text-slate-900">대단해요, <span class="user-name-span text-teal-600"></span>님!</h2>
-            <p class="text-slate-600 leading-relaxed">친숙한 전래동화로 지식의 구조를 완벽하게 파악하셨군요. 이제 실제 <strong>사회과 데이터</strong>에 도전해볼까요?</p>
-            <button onclick="startStage2()" class="w-full py-4 bg-teal-600 text-white font-bold rounded-2xl shadow-xl hover:bg-teal-700 transition">2단계(사회과) 시작하기</button>
-        </div>
-    </div>
-
-    <!-- Stage 2 Final Victory Modal -->
-    <div id="final-modal" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-10 max-w-lg w-full text-center space-y-6 shadow-2xl relative overflow-hidden">
-            <div class="text-7xl mb-4">👑</div>
-            <h2 class="text-3xl font-black text-slate-900"><span class="user-name-span text-teal-600"></span>님, 축하합니다!</h2>
-            <p class="text-lg text-slate-600 font-medium">당신은 지식의 층위를 꿰뚫어 보는<br><span class="text-teal font-bold">최고의 교육 콘텐츠 설계자</span>입니다.</p>
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm text-slate-500 italic">
-                하늘에서 쏟아지는 별과 보상들을 즐기세요!
-            </div>
-            <button onclick="location.reload()" class="w-full py-4 bg-[#0f2942] text-white font-bold rounded-2xl hover:bg-slate-800 transition">처음으로</button>
-        </div>
-    </div>
-
-    <footer class="text-center text-slate-400 text-[10px] pb-6 uppercase tracking-widest font-bold">
-        Edugraphy Lab | Concept-Based Inquiry Learning
-    </footer>
-</div>
-
-<script>
-    let userName = "";
-    const stage1Data = [
-        { text: "전래동화에서는 선이 악을 이기는 구조를 갖는다.", type: "gen" },
-        { text: "흥부놀부, 콩쥐팥쥐, 장화홍련", type: "fact" },
-        { text: "선(善), 악(惡), 구조", type: "concept" },
-        { text: "전래동화", type: "topic" }
-    ];
-    const stage2Data = [
-        { text: "자원의 희소성은 경제 주체의 선택의 문제를 야기한다.", type: "gen" },
-        { text: "어제 마트에서 배추 한 포기가 1만 원에 판매되었다.", type: "fact" },
-        { text: "인기 운동화 한정판을 사기 위해 사람들이 줄을 섰다.", type: "fact" },
-        { text: "희소성", type: "concept" },
-        { text: "선택", type: "concept" },
-        { text: "경제 활동과 가격", type: "topic" }
+    const BUCKETS = [
+      { id:'gen',     tier:'3단계', name:'일반화 (Generalization)', cls:'t3' },
+      { id:'concept', tier:'2단계', name:'개념 (Concepts)',         cls:'t2' },
+      { id:'topic',   tier:'1.5단계', name:'소재 (Topics)',         cls:'t4' },
+      { id:'fact',    tier:'1단계', name:'사실 (Facts)',            cls:'t1' }
     ];
 
-    let currentStage = 1;
-    let selectedItem = null;
+    const EMOJIS = ['⭐','🌟','✨','🎉','🍕','🍎','🍩','🎈'];
 
-    function saveNameAndStart() {
-        const input = document.getElementById('user-name-input');
-        userName = input.value.trim() || "참가자";
-        
-        document.getElementById('name-overlay').classList.add('hidden');
-        document.getElementById('quiz-main-ui').classList.remove('opacity-0');
-        
-        document.getElementById('display-name').textContent = userName;
-        document.querySelectorAll('.user-name-span').forEach(el => el.textContent = userName);
-        
-        renderStage();
+    let state = {
+      stage: 1,
+      items: [],
+      selected: null,
+      buckets: { gen:[], concept:[], topic:[], fact:[] },
+      checked: false,
+      showCompliment: false,
+      showFinal: false,
+      feedback: { main:'', sub:'', icon:'📢' }
+    };
+
+    function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+    function startStage(n) {
+      state.stage = n;
+      state.items = shuffle(STAGE_DATA[n]);
+      state.buckets = { gen:[], concept:[], topic:[], fact:[] };
+      state.selected = null;
+      state.checked = false;
+      state.showCompliment = false;
+      state.showFinal = false;
+      state.feedback = {
+        main: '지식 파편을 선택한 뒤 버킷을 클릭하세요.',
+        sub: n === 1 ? '전래동화로 구조 익히기' : '사회과 개념으로 전이하기',
+        icon: '📢'
+      };
+      render();
     }
 
-    function renderStage() {
-        const sourceList = document.getElementById('source-list');
-        sourceList.innerHTML = '';
-        const data = currentStage === 1 ? stage1Data : stage2Data;
-        const shuffled = [...data].sort(() => Math.random() - 0.5);
-
-        shuffled.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'draggable-item bg-slate-50 p-4 rounded-2xl border border-slate-200 text-sm font-medium shadow-sm';
-            div.textContent = item.text;
-            div.dataset.type = item.type;
-            div.onclick = (e) => { e.stopPropagation(); handleItemSelect(div); };
-            sourceList.appendChild(div);
-        });
-
-        document.getElementById('stage-badge').textContent = `STAGE ${currentStage}`;
-        document.getElementById('progress-bar').style.width = currentStage === 1 ? '50%' : '100%';
-        document.getElementById('stage-badge').style.backgroundColor = currentStage === 1 ? '#0f2942' : '#0d9488';
-        document.getElementById('stage-title').textContent = currentStage === 1 ? "친숙한 이야기로 구조 익히기" : "사회과 개념으로 전이하기";
+    function selectItem(id) {
+      if (state.checked) return;
+      state.selected = state.selected === id ? null : id;
+      state.feedback = state.selected
+        ? { main:'이제 알맞은 층위를 선택하세요.', sub:'클릭해서 버킷에 넣기', icon:'👆' }
+        : { main:'선택을 취소했습니다.', sub:'', icon:'📢' };
+      render();
     }
 
-    function handleItemSelect(el) {
-        if (selectedItem) selectedItem.classList.remove('selected');
-        selectedItem = el;
-        selectedItem.classList.add('selected');
-        updateFeedback("이제 알맞은 층위(Bucket)를 선택하세요.", "📢", "bg-blue-100");
-    }
-
-    function moveToBucket(bucketId) {
-        if (!selectedItem) return;
-        const bucket = document.getElementById('bucket-' + bucketId);
-        selectedItem.classList.remove('selected');
-        bucket.appendChild(selectedItem);
-        selectedItem = null;
-        updateFeedback("분류 완료! 다음 항목을 선택하세요.", "✨", "bg-teal-50");
-    }
-
-    function updateFeedback(text, icon, bgColor) {
-        document.getElementById('feedback-text').textContent = text;
-        document.getElementById('feedback-icon-circle').innerHTML = icon;
-        document.getElementById('feedback-icon-circle').className = `w-12 h-12 rounded-full flex items-center justify-center text-xl ${bgColor}`;
+    function moveToBucket(bId) {
+      if (!state.selected || state.checked) return;
+      const sel = state.selected;
+      let found = null;
+      state.items = state.items.filter(i => { if (i.id === sel) { found = i; return false; } return true; });
+      if (!found) {
+        for (const b of Object.keys(state.buckets)) {
+          state.buckets[b] = state.buckets[b].filter(i => { if (i.id === sel) { found = i; return false; } return true; });
+        }
+      }
+      if (found) state.buckets[bId].push(found);
+      state.selected = null;
+      state.feedback = { main:'분류 완료! 다음 항목을 선택하세요.', sub:'', icon:'✅' };
+      render();
     }
 
     function checkAnswers() {
-        const sourceList = document.getElementById('source-list');
-        if (sourceList.children.length > 0) {
-            updateFeedback("분류되지 않은 항목이 있습니다.", "⚠️", "bg-orange-100");
-            return;
+      if (state.items.length > 0) {
+        state.feedback = { main:'아직 분류하지 않은 항목이 있어요.', sub:'모두 배치한 후 확인하세요.', icon:'⚠️' };
+        render(); return;
+      }
+      state.checked = true;
+      let allOk = true;
+      for (const b of Object.keys(state.buckets)) {
+        for (const item of state.buckets[b]) {
+          if (item.type !== b) allOk = false;
         }
-
-        let isCorrect = true;
-        ['gen', 'concept', 'topic', 'fact'].forEach(bType => {
-            const container = document.getElementById('bucket-' + bType);
-            for (let child of container.children) {
-                if (child.dataset.type === bType) {
-                    child.className = 'draggable-item p-4 rounded-2xl border-2 border-green-500 bg-green-50 text-sm font-bold text-green-700';
-                } else {
-                    isCorrect = false;
-                    child.className = 'draggable-item p-4 rounded-2xl border-2 border-red-500 bg-red-50 text-sm font-bold text-red-700';
-                }
-            }
-        });
-
-        if (isCorrect) {
-            if (currentStage === 1) document.getElementById('compliment-modal').classList.remove('hidden');
-            else startCelebration();
+      }
+      if (allOk) {
+        if (state.stage === 1) {
+          state.showCompliment = true;
+          state.feedback = { main:'완벽해요! 1단계 통과!', sub:'전래동화 구조 마스터', icon:'🎉' };
         } else {
-            updateFeedback("틀린 분류가 있습니다. 다시 확인해 보세요.", "❌", "bg-red-100");
+          state.showFinal = true;
+          state.feedback = { main:'지식의 구조를 완벽히 이해했습니다!', sub:'', icon:'👑' };
         }
+      } else {
+        state.feedback = { main:'틀린 분류가 있어요. 다시 확인해 보세요.', sub:'빨간 항목을 올바른 버킷으로 이동하세요.', icon:'❌' };
+      }
+      render();
     }
 
-    function startCelebration() {
-        document.getElementById('final-modal').classList.remove('hidden');
-        const foods = ['🍕', '🍔', '🍎', '🍰', '🍗', '🍩', '🍇', '🍱', '🥐', '🍦', '🍫', '🥨', '🥞'];
-        for (let i = 0; i < 90; i++) createFallingElement('★', 'star');
-        for (let i = 0; i < 70; i++) createFallingElement(foods[Math.floor(Math.random() * foods.length)], 'food');
-    }
+    function resetStage() { startStage(state.stage); }
 
-    function createFallingElement(content, className) {
+    function burst() {
+      const zone = document.getElementById('burst-zone');
+      if (!zone) return;
+      for (let i = 0; i < 32; i++) {
         const el = document.createElement('div');
-        el.className = `falling-element ${className}`;
-        el.textContent = content;
-        el.style.left = Math.random() * 100 + 'vw';
-        el.style.animationDuration = (Math.random() * 4 + 3) + 's';
-        el.style.animationDelay = (Math.random() * 3) + 's';
-        document.body.appendChild(el);
-        setTimeout(() => el.remove(), 7000);
+        el.className = 'burst-el';
+        el.textContent = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+        el.style.left = (Math.random() * 95) + '%';
+        el.style.top = '-30px';
+        el.style.animationDuration = (2 + Math.random() * 2.5) + 's';
+        el.style.animationDelay = (Math.random() * 1.5) + 's';
+        zone.appendChild(el);
+      }
     }
 
-    function startStage2() {
-        document.getElementById('compliment-modal').classList.add('hidden');
-        currentStage = 2;
-        ['gen', 'concept', 'topic', 'fact'].forEach(b => document.getElementById('bucket-' + b).innerHTML = '');
-        renderStage();
-        updateFeedback("2단계: 사회과 탐구를 시작합니다.", "🚀", "bg-teal-100");
+    function render() {
+      const root = document.getElementById('root');
+      const s = state;
+      const isS1 = s.stage === 1;
+      const selClass = isS1 ? 'sel-s1' : 'sel-s2';
+      const hoverClass = isS1 ? 'hover-s1' : 'hover-s2';
+      const btnPrimary = isS1 ? 'p-s1' : 'p-s2';
+      const pillClass = isS1 ? 's1' : 's2';
+      const pillIcon = isS1 ? 'ti-book' : 'ti-school';
+      const pillLabel = isS1 ? 'STAGE 1 — 전래동화로 구조 익히기' : 'STAGE 2 — 사회과 개념으로 전이하기';
+      const progColor = isS1 ? '#1D9E75' : '#7F77DD';
+      const progWidth = isS1 ? '50%' : '100%';
+
+      let html = `
+        <div class="stage-bar">
+          <span class="stage-pill ${pillClass}">
+            <i class="ti ${pillIcon}" aria-hidden="true" style="font-size:12px;"></i>
+            ${pillLabel}
+          </span>
+          <span class="step-label">${s.stage} / 2</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width:${progWidth};background:${progColor};"></div>
+        </div>
+        <div class="header">
+          <h1>지식의 구조 마스터 퀴즈</h1>
+          <p>${isS1 ? '지식의 피라미드를 완성해 보세요!' : '사회과 지식을 피라미드에 배치하세요!'}</p>
+        </div>
+        <div class="pyramid-hint">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6"  y="28" width="24" height="5" rx="1" fill="#378ADD" opacity="0.8"/>
+            <rect x="9"  y="21" width="18" height="5" rx="1" fill="#7F77DD" opacity="0.8"/>
+            <rect x="12" y="14" width="12" height="5" rx="1" fill="#1D9E75" opacity="0.8"/>
+            <rect x="15" y="7"  width="6"  height="5" rx="1" fill="#BA7517" opacity="0.8"/>
+          </svg>
+          <span>위로 갈수록 추상적, 아래로 갈수록 구체적입니다.<br>항목을 선택한 뒤 알맞은 층위를 클릭하세요.</span>
+        </div>`;
+
+      if (s.items.length > 0) {
+        html += `<div class="instruction-chip"><i class="ti ti-hand-finger" aria-hidden="true" style="font-size:13px;"></i> 항목 선택 → 버킷 클릭으로 분류</div>`;
+        html += `<div class="source-label"><i class="ti ti-file-text" aria-hidden="true" style="font-size:14px;"></i> 분류할 지식 파편 (${s.items.length}개 남음)</div>`;
+        html += `<div class="source-list">`;
+        for (const item of s.items) {
+          const isSel = s.selected === item.id;
+          html += `<button class="item-chip${isSel ? ' ' + selClass : ''}" onclick="selectItem('${item.id}')"><span class="item-dot"></span>${item.text}</button>`;
+        }
+        html += `</div>`;
+      } else if (!s.checked) {
+        html += `<div class="all-placed"><i class="ti ti-check" aria-hidden="true" style="font-size:14px;"></i> 모두 배치 완료 — 정답을 확인하세요!</div>`;
+      }
+
+      html += `<div class="buckets-grid">`;
+      for (const b of BUCKETS) {
+        const items = s.buckets[b.id];
+        html += `<div class="bucket ${b.cls} ${hoverClass}" onclick="moveToBucket('${b.id}')">
+          <div class="bucket-header"><span class="bucket-tier">${b.tier}</span><span class="bucket-name">${b.name}</span></div>
+          <div class="bucket-items">`;
+        for (const item of items) {
+          let chipCls = 'item-chip';
+          if (s.checked) chipCls += item.type === b.id ? ' correct' : ' wrong';
+          else if (s.selected === item.id) chipCls += ' ' + selClass;
+          html += `<button class="${chipCls}" onclick="(function(e){e.stopPropagation();selectItem('${item.id}');})(event)">${item.text}</button>`;
+        }
+        if (items.length === 0) html += `<div class="bucket-empty">여기에 놓기</div>`;
+        html += `</div></div>`;
+      }
+      html += `</div>`;
+
+      html += `<div class="feedback-bar">
+        <div class="feedback-msg">
+          <div class="feedback-icon">${s.feedback.icon}</div>
+          <div class="feedback-text"><strong>${s.feedback.main}</strong>${s.feedback.sub}</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-sm" onclick="resetStage()"><i class="ti ti-refresh" aria-hidden="true" style="font-size:13px;"></i> 다시</button>
+          <button class="btn-sm ${btnPrimary}" onclick="checkAnswers()">정답 확인</button>
+        </div>
+      </div>`;
+
+      if (s.showCompliment) {
+        html += `<div class="modal-overlay compliment" id="burst-zone">
+          <div class="modal-card">
+            <div class="modal-icon">👏</div>
+            <h2>1단계 통과!</h2>
+            <p>전래동화로 지식의 구조를 완벽하게 파악했어요.<br>이제 <strong>사회과 데이터</strong>에 도전해볼까요?</p>
+            <button class="btn-sm p-s2" style="width:100%;justify-content:center;" onclick="startStage(2)">
+              <i class="ti ti-arrow-right" aria-hidden="true"></i> 2단계 시작하기
+            </button>
+          </div>
+        </div>`;
+      }
+
+      if (s.showFinal) {
+        html += `<div class="modal-overlay final" id="burst-zone">
+          <div class="modal-card">
+            <div class="modal-icon">👑</div>
+            <h2>퀴즈 완료!</h2>
+            <p>지식의 층위를 꿰뚫어 보는<br><strong>최고의 교육 콘텐츠 설계자</strong>입니다.</p>
+            <div class="final-note">사실 → 소재 → 개념 → 일반화의 흐름이<br>Concept-Based 수업 설계의 핵심입니다.</div>
+            <button class="btn-sm p-s1" style="width:100%;justify-content:center;" onclick="startStage(1)">
+              <i class="ti ti-refresh" aria-hidden="true"></i> 처음부터 다시
+            </button>
+          </div>
+        </div>`;
+      }
+
+      root.innerHTML = html;
+      if (s.showCompliment || s.showFinal) setTimeout(burst, 100);
     }
 
-    function resetCurrentStage() {
-        ['gen', 'concept', 'topic', 'fact'].forEach(b => document.getElementById('bucket-' + b).innerHTML = '');
-        renderStage();
-    }
-</script>
+    startStage(1);
+  </script>
 </body>
 </html>
